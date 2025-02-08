@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+      font-family: 'Arial', sans-serif;
+    }
+
+    .calculator {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    #display {
+      width: 100%;
+      height: 60px;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 10px;
+      font-size: 2em;
+      color: white;
+      text-align: right;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      padding: 20px;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    button:active, button.active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .operator {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .equals {
+      background: rgba(78, 205, 196, 0.5);
+    }
+
+    .clear {
+      background: rgba(255, 107, 107, 0.5);
+    }
+
+    .key-hint {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      font-size: 0.7em;
+      opacity: 0.7;
+      color: rgba(255, 255, 255, 0.8);
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <div style="position: relative;">
+      <input type="text" id="display" placeholder="">
+      <div class="key-hint"></div>
+    </div>
+    <div class="buttons">
+      <button class="clear" onclick="clearDisplay()" data-key="Escape">C</button>
+      <button class="operator" onclick="backspace()" data-key="Backspace">⌫</button>
+      <button class="operator" onclick="appendOperator('%')" data-key="%">%</button>
+      <button class="operator" onclick="appendOperator('/')" data-key="/">/</button>
+      
+      <button onclick="appendNumber('7')" data-key="7">7</button>
+      <button onclick="appendNumber('8')" data-key="8">8</button>
+      <button onclick="appendNumber('9')" data-key="9">9</button>
+      <button class="operator" onclick="appendOperator('*')" data-key="*">×</button>
+      
+      <button onclick="appendNumber('4')" data-key="4">4</button>
+      <button onclick="appendNumber('5')" data-key="5">5</button>
+      <button onclick="appendNumber('6')" data-key="6">6</button>
+      <button class="operator" onclick="appendOperator('-')" data-key="-">-</button>
+      
+      <button onclick="appendNumber('1')" data-key="1">1</button>
+      <button onclick="appendNumber('2')" data-key="2">2</button>
+      <button onclick="appendNumber('3')" data-key="3">3</button>
+      <button class="operator" onclick="appendOperator('+')" data-key="+">+</button>
+      
+      <button onclick="appendNumber('0')" data-key="0">0</button>
+      <button onclick="appendNumber('.')" data-key=".">.</button>
+      <button class="equals" onclick="calculate()" style="grid-column: span 2" data-key="Enter">=</button>
+    </div>
+  </div>
+
+  <script>
+    const display = document.getElementById('display');
+    let currentExpression = '';
+
+    function appendNumber(num) {
+      currentExpression += num;
+      display.value = currentExpression;
+    }
+
+    function appendOperator(op) {
+      if (currentExpression !== '' && !isOperator(currentExpression.slice(-1))) {
+        currentExpression += op;
+        display.value = currentExpression;
+      }
+    }
+
+    function isOperator(char) {
+      return ['+', '-', '*', '/', '%'].includes(char);
+    }
+
+    function clearDisplay() {
+      currentExpression = '';
+      display.value = '';
+    }
+
+    function backspace() {
+      currentExpression = currentExpression.slice(0, -1);
+      display.value = currentExpression;
+    }
+
+    function calculate() {
+      try {
+        // Handle modulo specially to avoid floating-point issues
+        if (currentExpression.includes('%')) {
+          const parts = currentExpression.split('%');
+          if (parts.length === 2) {
+            const result = Number(parts[0]) % Number(parts[1]);
+            currentExpression = result.toString();
+          }
+        } else {
+          currentExpression = eval(currentExpression).toString();
+        }
+        display.value = currentExpression;
+      } catch (error) {
+        display.value = 'Error';
+        currentExpression = '';
+      }
+    }
+
+    // Keyboard handling
+    document.addEventListener('keydown', (event) => {
+      // Prevent default behavior for calculator keys
+      if (event.key.match(/[\d%\+\-\*\/\.\=]|Enter|Backspace|Escape/)) {
+        event.preventDefault();
+      }
+
+      // Find and activate the corresponding button
+      const button = document.querySelector(`button[data-key="${event.key}"]`);
+      if (button) {
+        button.classList.add('active');
+        button.click();
+      }
+
+      // Show keyboard shortcuts help
+      if (event.key === '?') {
+        alert(`Keyboard Shortcuts:
+• Numbers: 0-9
+• Operators: +, -, *, /
+• Decimal: .
+• Modulo: %
+• Calculate: Enter or =
+• Clear: Escape
+• Backspace: ⌫ key
+• Help: ?`);
+      }
+    });
+
+    // Remove active state when key is released
+    document.addEventListener('keyup', (event) => {
+      const button = document.querySelector(`button[data-key="${event.key}"]`);
+      if (button) {
+        button.classList.remove('active');
+      }
+    });
+
+    // Focus display on load
+    window.addEventListener('load', () => {
+      display.focus();
+    });
+  </script>
+</body>
+
+</html>
